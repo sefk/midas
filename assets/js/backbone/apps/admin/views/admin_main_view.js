@@ -56,6 +56,8 @@ var AdminMainView = Backbone.View.extend({
       }
       this.hideOthers();
       this.adminTaskView.render();
+    //} else if (target == "tasks/export") {
+      //this.adminTaskView.renderExport();
     } else if (target == 'dashboard') {
       if (!this.adminDashboardView) {
         this.initializeAdminDashboardView();
