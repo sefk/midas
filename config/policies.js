@@ -79,6 +79,10 @@ module.exports.policies = {
     '*': 'protectedFile'
   },
 
+  ExportController : {
+    'export': 'admin'
+  },
+
   ProjectController : {
     '*': ['authenticated', 'addUserId', 'project'],
     'find': ['authenticated', 'requireId', 'project'],

@@ -40,6 +40,16 @@ module.exports = {
     }
   },
 
+  exportFormat: {
+    'project_id': 'projectId',
+    'name': 'title',
+    'description': 'description',
+    'created_date': 'createdAt',
+    'published_date': 'publishedAt',
+    'assigned_date': 'createdAt',
+    'owner_id': 'userId'
+  },
+
   beforeUpdate: function(values, done) {
     Task.findOne({ id: values.id }).exec(function(err, task) {
       if (err) done(err);

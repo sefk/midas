@@ -45,6 +45,17 @@ module.exports = {
       type: 'INTEGER',
       defaultsTo: 0
     }
+  },
+
+  // TODO: add more fields, likely driven off subqueries
+  exportFormat: {
+    'user_id': 'id',
+    'name': 'name',
+    'username': 'username',
+    'title': 'title',
+    'bio': 'bio',
+    'isAdmin': 'isAdmin',
+    'disabled': 'disabled'
   }
 
 };
