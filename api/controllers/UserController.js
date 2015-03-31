@@ -9,6 +9,7 @@ var _ = require('underscore');
 var bcrypt = require('bcrypt');
 var projUtils = require('../services/utils/project');
 var taskUtils = require('../services/utils/task');
+var exportUtil = require('../services/utils/export');
 var tagUtils = require('../services/utils/tag');
 var userUtils = require('../services/utils/user');
 var validator = require('validator');
@@ -396,5 +397,26 @@ module.exports = {
     });
 
   },
+
+  export: function (req, resp) {
+    User.find().exec(function (err, users) {
+      var render;
+      if (err) {
+        render = {
+          rc: 400,
+          content: {message: 'An error occurred while looking up users.', error: err}
+        };
+      } else {
+        render = exportUtil.renderCSV(User, users);
+        if (render.rc >= 200 && render.rc < 300) {
+          resp.set('Content-Type', 'text/csv');
+          resp.set('Content-disposition', 'attachment; filename=users.csv');
+        }
+      }
+      resp.send(render.rc, render.content);
+    });
+  }
+
+
 
 };

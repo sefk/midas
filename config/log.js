@@ -21,10 +21,9 @@ module.exports = {
   // 'debug'	: Display calls from `.error()`, `.warn()` to `.debug()`
   // 'info'	: Display calls from `.error()`, `.warn()`, `.debug()` to `.info()`
   // 'verbose': Display calls from `.error()`, `.warn()`, `.debug()`, `.info()` to `.verbose()`
-  // 'silly': Also displays request routing
   //
   log: {
-    level: 'verbose'
+    level: 'info'
   }
 
 };

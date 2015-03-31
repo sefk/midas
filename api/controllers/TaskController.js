@@ -7,6 +7,7 @@
 var taskUtil = require('../services/utils/task');
 var tagUtil = require('../services/utils/tag');
 var userUtil = require('../services/utils/user');
+var exportUtil = require('../services/utils/export');
 var i18n = require('i18next');
 
 module.exports = {
@@ -54,6 +55,25 @@ module.exports = {
     .exec(function(err, tasks) {
       if (err) return res.send(err, 500);
       res.send({ tasks: tasks });
+    });
+  },
+
+  export: function (req, resp) {
+    Task.find().exec(function (err, tasks) {
+      var render;
+      if (err) {
+        render = {
+          rc: 400,
+          content: {message: 'An error occurred while looking up tasks.', error: err}
+        };
+      } else {
+        render = exportUtil.renderCSV(Task, tasks);
+        if (render.rc >= 200 && render.rc < 300) {
+          resp.set('Content-Type', 'text/csv');
+          resp.set('Content-disposition', 'attachment; filename=users.csv');
+        }
+      }
+      resp.send(render.rc, render.content);
     });
   }
 
