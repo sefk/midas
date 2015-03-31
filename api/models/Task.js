@@ -47,7 +47,7 @@ module.exports = {
     'created_date': 'createdAt',
     'published_date': 'publishedAt',
     'assigned_date': 'createdAt',
-    'owner_id': 'userId'
+    'creator_name': 'creator_name'
   },
 
   beforeUpdate: function(values, done) {

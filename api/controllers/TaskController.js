@@ -60,20 +60,26 @@ module.exports = {
 
   export: function (req, resp) {
     Task.find().exec(function (err, tasks) {
-      var render;
       if (err) {
-        render = {
-          rc: 400,
-          content: {message: 'An error occurred while looking up tasks.', error: err}
-        };
-      } else {
-        render = exportUtil.renderCSV(Task, tasks);
+        resp.send(400, {message: 'Error when querying for tasks.', error: err});
+        return;
+      }
+      // TODO: use association to do proper join
+      User.find({id: _.pluck(tasks, 'userId')}).exec(function (err, creators) {
+        if (err) {
+          resp.send(400, {message: 'Error when querying for task creators.', error: err});
+          return;
+        }
+        tasks.forEach(function (task, i) {
+          tasks[i].creator_name = _.findWhere(creators, {id: task.userId}).name;
+        });
+        var render = exportUtil.renderCSV(Task, tasks);
         if (render.rc >= 200 && render.rc < 300) {
           resp.set('Content-Type', 'text/csv');
           resp.set('Content-disposition', 'attachment; filename=users.csv');
         }
-      }
-      resp.send(render.rc, render.content);
+        resp.send(render.rc, render.content);
+      });
     });
   }
 
