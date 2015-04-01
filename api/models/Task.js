@@ -3,6 +3,7 @@
     -> model
 ---------------------*/
 var noteUtils = require('../services/notifications/manager');
+var exportUtils = require('../services/utils/export');
 
 module.exports = {
 
@@ -44,10 +45,20 @@ module.exports = {
     'project_id': 'projectId',
     'name': 'title',
     'description': 'description',
-    'created_date': 'createdAt',
-    'published_date': 'publishedAt',
-    'assigned_date': 'createdAt',
-    'creator_name': 'creator_name'
+    'created_date': {
+      field: 'createdAt',
+      filter: exportUtils.excelDateFormat
+    },
+    'published_date': {
+      field: 'publishedAt',
+      filter: exportUtils.excelDateFormat
+    },
+    'assigned_date': {
+      field: 'createdAt',
+      filter: exportUtils.excelDateFormat
+    },
+    'creator_name': 'creator_name',
+    'signups': 'signups'
   },
 
   beforeUpdate: function(values, done) {

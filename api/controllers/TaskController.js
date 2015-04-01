@@ -64,21 +64,38 @@ module.exports = {
         resp.send(400, {message: 'Error when querying for tasks.', error: err});
         return;
       }
-      // TODO: use association to do proper join
+
       User.find({id: _.pluck(tasks, 'userId')}).exec(function (err, creators) {
         if (err) {
           resp.send(400, {message: 'Error when querying for task creators.', error: err});
           return;
         }
-        tasks.forEach(function (task, i) {
-          tasks[i].creator_name = _.findWhere(creators, {id: task.userId}).name;
-        });
-        var render = exportUtil.renderCSV(Task, tasks);
-        if (render.rc >= 200 && render.rc < 300) {
-          resp.set('Content-Type', 'text/csv');
-          resp.set('Content-disposition', 'attachment; filename=users.csv');
+        for (var i=0; i < tasks.length; i++) {
+          var creator = _.findWhere(creators, {id: tasks[i].userId});
+          tasks[i].creator_name = creator ? creator.name : "";
         }
-        resp.send(render.rc, render.content);
+
+        // waterline ORM groupby/count isn't ready for prime time yet, query manually
+        var sql = 'SELECT "taskId" AS id, sum(1) AS count FROM volunteer GROUP BY "taskId"';
+        Volunteer.query(sql, function (err, volQueryResult) {
+          if (err) {
+            resp.send(400, {message: 'Error when querying volunteers.', error: err});
+            return;
+          }
+          var volunteers = volQueryResult.rows;
+          for (var i=0; i < tasks.length; i++) {
+            var taskVols = _.findWhere(volunteers, {id: tasks[i].id});
+            tasks[i].signups = taskVols ? parseInt(taskVols.count) : 0;
+          }
+
+          // gathered all data, render and return
+          var render = exportUtil.renderCSV(Task, tasks);
+          if (render && render.rc >= 200 && render.rc < 300) {
+            resp.set('Content-Type', 'text/csv');
+            resp.set('Content-disposition', 'attachment; filename=tasks.csv');
+          }
+          resp.send(render.rc, render.content);
+        });
       });
     });
   }
