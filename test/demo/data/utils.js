@@ -143,7 +143,7 @@ module.exports = {
   },
 
   task_create: function(request, task, cb) {
-    this.post(request, conf.url + '/task', task, cb);
+    this.post(request, conf.url + '/task.test.js', task, cb);
   },
 
   tag_find: function(request, name, type, cb) {

@@ -5,8 +5,8 @@ var moment = require('moment')
 module.exports = {
 
   /**
-   * Given a set of records, render to an string in CSV format. First line will be the
-   * names of the columns.
+   * Given a set of records, render to an string in CSV format. Includes column
+   * headers. Use json2csv module to take care of escapes and such.
    *
    * @param model -- an exportFormat object to describe what list to output. Each
    *        field maps the output column to the input field. If the input field is
@@ -14,9 +14,10 @@ module.exports = {
    *        have a field member for the fetch, and a format field for the function to
    *        apply to that field.
    * @param records -- array of records to dump out
-   * @returns {{rc: number, content: string}}
+   * @param done(error, buffer) -- callback. if error then message in first
+   *        parameter, if OK then error should be null and rendered result in buffer.
    */
-  renderCSV: function (model, records) {
+  renderCSV: function (model, records, done) {
     var output = "";
     var fieldNames = _.keys(model.exportFormat);
     var fields = _.values(model.exportFormat);
@@ -37,15 +38,11 @@ module.exports = {
       fieldNames: fieldNames
     }, function (err, csv) {
       if (err) {
-        return {
-          rc: 400,
-          content: {message: 'There was a render error.', error: err}
-        };
+        done(err);
       }
-      // TODO: streaming would be more memory efficient
       output += csv + "\n";
     });
-    return {rc: 200, content: output};
+    done(null, output);
   },
 
   /**
@@ -57,6 +54,14 @@ module.exports = {
    */
   excelDateFormat: function (date) {
     return moment(date).format("YYYY-MM-DD HH:mm:ss")
+  },
+
+  nullToEmptyString: function (str) {
+    if (!str) {
+      return ""
+    } else {
+      return str;
+    }
   }
 
 };

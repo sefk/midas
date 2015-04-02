@@ -49,7 +49,7 @@ module.exports.policies = {
     'enable': ['authenticated', 'requireId', 'requireUserId', 'admin'],
     'resetPassword': ['authenticated', 'requireUserId'],
     'emailCount': ['test'],
-    'export': ['authenticated']
+    'export': ['authenticated', 'admin']
   },
 
   UserEmailController : {
@@ -78,10 +78,6 @@ module.exports.policies = {
     'testupload': true,
     // everything else is protected
     '*': 'protectedFile'
-  },
-
-  ExportController : {
-    'export': 'admin'
   },
 
   ProjectController : {
@@ -167,7 +163,8 @@ module.exports.policies = {
     'findAllByProjectId': ['authenticated', 'requireId', 'project'],
     'create': ['authenticated', 'requireUserId', 'addUserId'],
     'update': ['authenticated', 'requireUserId', 'requireId', 'projectId', 'task', 'ownerOrAdmin'],
-    'destroy': ['authenticated', 'requireUserId', 'requireId', 'task', 'ownerOrAdmin']
+    'destroy': ['authenticated', 'requireUserId', 'requireId', 'task', 'ownerOrAdmin'],
+    'export': ['authenticated', 'admin']
   },
 
   AttachmentController: {

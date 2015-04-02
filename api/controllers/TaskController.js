@@ -61,41 +61,58 @@ module.exports = {
   export: function (req, resp) {
     Task.find().exec(function (err, tasks) {
       if (err) {
-        resp.send(400, {message: 'Error when querying for tasks.', error: err});
+        sails.log.error("task query error. " + err);
+        resp.send(400, {message: 'Error when querying tasks.', error: err});
         return;
       }
+      sails.log.debug('task export: found %s tasks', tasks.length)
 
       User.find({id: _.pluck(tasks, 'userId')}).exec(function (err, creators) {
         if (err) {
-          resp.send(400, {message: 'Error when querying for task creators.', error: err});
+          sails.log.error("task creator query error. " + err);
+          resp.send(400, {message: 'Error when querying task creators.', error: err});
           return;
         }
+        sails.log.debug('task export: found %s creators', creators.length)
         for (var i=0; i < tasks.length; i++) {
           var creator = _.findWhere(creators, {id: tasks[i].userId});
           tasks[i].creator_name = creator ? creator.name : "";
         }
 
-        // waterline ORM groupby/count isn't ready for prime time yet, query manually
-        var sql = 'SELECT "taskId" AS id, sum(1) AS count FROM volunteer GROUP BY "taskId"';
-        Volunteer.query(sql, function (err, volQueryResult) {
+        var processVolunteerQuery = function (err, volQueryResult) {
           if (err) {
-            resp.send(400, {message: 'Error when querying volunteers.', error: err});
+            sails.log.error("volunteer query error. " + err);
+            resp.send(400, {message: 'Error when counting volunteers', error: err});
             return;
           }
           var volunteers = volQueryResult.rows;
+          sails.log.debug('task export: found %s task volunteer counts', volunteers ? volunteers.length : 0)
           for (var i=0; i < tasks.length; i++) {
             var taskVols = _.findWhere(volunteers, {id: tasks[i].id});
             tasks[i].signups = taskVols ? parseInt(taskVols.count) : 0;
           }
-
-          // gathered all data, render and return
-          var render = exportUtil.renderCSV(Task, tasks);
-          if (render && render.rc >= 200 && render.rc < 300) {
+          // gathered all data, render and return as file for download
+          exportUtil.renderCSV(Task, tasks, function (err, rendered) {
+            if (err) {
+              sails.log.error("task export render error. " + err);
+              resp.send(400, {message: 'Error when rendering', error: err})
+              return;
+            }
             resp.set('Content-Type', 'text/csv');
             resp.set('Content-disposition', 'attachment; filename=tasks.csv');
-          }
-          resp.send(render.rc, render.content);
-        });
+            resp.send(200, rendered);
+          });
+        };
+
+        // Waterline ORM groupby/count doesn't work yet, so query manually
+        if ('query' in Volunteer) {
+          var sql = 'SELECT "taskId" AS id, sum(1) AS count FROM volunteer GROUP BY "taskId"';
+          Volunteer.query(sql, processVolunteerQuery);
+        } else {
+          sails.log.info("bypassing volunteer query, must be in a test");
+          // Since our testing backend doesn't handle sql, we need to bypass
+          processVolunteerQuery(null, []);
+        }
       });
     });
   }

@@ -63,7 +63,7 @@ describe('Task page', function() {
     })
   })
 
-  it('should have task listing page', function() {
+  it('should have task.test.js listing page', function() {
     casper.then(function() {
       casper.waitForSelector('#browse-list', loaded, failed, 1000 * 15);
       function loaded() {
@@ -75,14 +75,14 @@ describe('Task page', function() {
     });
   });
 
-  it('should have task list with tasks', function() {
+  it('should have task.test.js list with tasks', function() {
     casper.then(function() {
-      assert.equal(1, casper.getElementsInfo('.task-box').length);
+      assert.equal(1, casper.getElementsInfo('.task.test.js-box').length);
     });
   });
 
-  it('should have task page with matching content', function() {
-    var sel = '.task-box .task-list-title a',
+  it('should have task.test.js page with matching content', function() {
+    var sel = '.task.test.js-box .task.test.js-list-title a',
         linkTitle = casper.fetchText(sel).trim();
     casper.click(sel);
     casper.then(function() {

@@ -400,23 +400,23 @@ module.exports = {
 
   export: function (req, resp) {
     User.find().exec(function (err, users) {
-      var render;
       if (err) {
-        render = {
-          rc: 400,
-          content: {message: 'An error occurred while looking up users.', error: err}
-        };
-      } else {
-        render = exportUtil.renderCSV(User, users);
-        if (render.rc >= 200 && render.rc < 300) {
-          resp.set('Content-Type', 'text/csv');
-          resp.set('Content-disposition', 'attachment; filename=users.csv');
-        }
+        sails.log.error("user query error. " + err);
+        resp.send(400, {message: 'An error occurred while looking up users.', error: err});
+        return;
       }
-      resp.send(render.rc, render.content);
+      sails.log.debug('user export: found %s', users.length);
+      exportUtil.renderCSV(User, users, function (err, rendered) {
+        if (err) {
+          sails.log.error("user export render error. " + err);
+          resp.send(400, {message: 'An error occurred while rendering user list.', error: err});
+          return;
+        }
+        resp.set('Content-Type', 'text/csv');
+        resp.set('Content-disposition', 'attachment; filename=users.csv');
+        resp.send(200, rendered);
+      });
     });
   }
-
-
 
 };
