@@ -9,24 +9,33 @@ var MapView = Backbone.View.extend({
 
   el: "#container",
 
-  events: {
-  },
+  events: {},
 
   initialize: function (options) {
-    this.options = options;
+    var that = this;
+    that.options = options;
+    d3.json("data/world-50m.json", function (error, world) {
+      that.countries = topojson.feature(world, world.objects.countries).features;
+      that.neighbors = topojson.neighbors(world.objects.countries.geometries);
+      that.render();
+    });
+
+    $(window).resize(_.debounce(function () {
+      that.render();
+    }, 600));
   },
 
   render: function () {
-    var m_width = parseInt(d3.select(this.el).style('width'),10)
-    var m_height = 500;
-    var width = m_width;
-    var height = m_height;
+    var that = this;
+    var width = parseInt(d3.select(this.el).style('width'), 10)
+    var height = 400;
 
-    var svg = d3.select(this.el).append("svg")
+    this.$el.find('svg').remove();
+    var svg = d3.select(this.el).append('svg')
       .attr("preserveAspectRatio", "xMidYMid")
       .attr("viewBox", "0 0 " + width + " " + height)
-      .attr("width", m_width)
-      .attr("height", m_width * height / width);
+      .attr("width", width)
+      .attr("height", height);
 
     var projection = d3.geo.mercator()
       .scale(150)
@@ -46,28 +55,16 @@ var MapView = Backbone.View.extend({
       .attr("class", "stroke")
       .attr("xlink:href", "#sphere");
 
-    d3.json("data/world-50m.json", function (error, world) {
-      var countries = topojson.feature(world, world.objects.countries).features;
-      var neighbors = topojson.neighbors(world.objects.countries.geometries);
-
-      svg.selectAll(".country")
-        .data(countries)
-        .enter().insert("path", ".graticule")
-        .attr("class", "country")
-        .attr("d", path)
-        .style("fill", function (d, i) {
-          return color(d.color = d3.max(neighbors[i], function (n) {
-            return countries[n].color;
-          }) + 1 | 0);
-        });
-
-      svg.insert("path", ".graticule")
-        .datum(topojson.mesh(world, world.objects.countries, function (a, b) {
-          return a !== b;
-        }))
-        .attr("class", "boundary")
-        .attr("d", path);
-    });
+    svg.selectAll(".country")
+      .data(that.countries)
+      .enter().insert("path", ".graticule")
+      .attr("class", "country")
+      .attr("d", path)
+      .style("fill", function (d, i) {
+        return color(d.color = d3.max(that.neighbors[i], function (n) {
+          return that.countries[n].color;
+        }) + 1 | 0);
+      });
 
     d3.select(self.frameElement).style("height", height + "px");
   },

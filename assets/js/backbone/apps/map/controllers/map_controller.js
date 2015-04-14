@@ -12,7 +12,7 @@ Map.Controller = BaseController.extend({
   },
 
   initialize: function (options) {
-    this.homeView = new MapView().render();
+    this.homeView = new MapView();  // initialize takes care of render
   },
 
   cleanup: function() {
