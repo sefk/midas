@@ -43,6 +43,7 @@ module.exports.policies = {
     'update': ['authenticated', 'requireUserId', 'requireId'],
     'username': ['authenticated'],
     'find': ['authenticated', 'requireUserId'],
+    'all': ['authenticated', 'requireUserId'],
     'findOne': ['authenticated', 'requireUserId'],
     'activities': ['authenticated'],
     'disable': ['authenticated', 'requireId', 'requireUserId'],

@@ -1685,7 +1685,6 @@ ul.task-tags > li {
 
 .value-prop .text {
   font-size: 18px;
-
 }
 
 .value-prop .icon {
@@ -1712,4 +1711,14 @@ ul.task-tags > li {
 
 .nav-tabs > .export-button {
   line-height: 42px;
+}
+
+.country {
+  stroke: #888;
+  stroke-width: 0.5px;
+}
+
+.gpoint {
+  fill: #f2f200;
+  stroke: #111;
 }
