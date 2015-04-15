@@ -1692,29 +1692,16 @@ ul.task-tags > li {
   line-height: 42px;
 }
 
-.stroke {
-  fill: none;
-  stroke: #000;
-  stroke-width: 3px;
+.mapborder {
+  margin:10px 10%;
+  border:2px solid #000;
+  border-radius: 5px;
+  height:100%;
+  overflow:hidden;
+  background:#eee;
 }
 
-.fill {
-  fill: #fff;
-}
-
-.graticule {
-  fill: none;
-  stroke: #777;
-  stroke-width: .5px;
-  stroke-opacity: .5;
-}
-
-.land {
-  fill: #222;
-}
-
-.boundary {
-  fill: none;
-  stroke: #fff;
-  stroke-width: .5px;
+.country {
+  stroke: #888;
+  stroke-width: 0.5px;
 }
