@@ -1663,7 +1663,6 @@ ul.task-tags > li {
 
 .value-prop .text {
   font-size: 18px;
-
 }
 
 .value-prop .icon {
@@ -1692,16 +1691,12 @@ ul.task-tags > li {
   line-height: 42px;
 }
 
-.mapborder {
-  margin:10px 10%;
-  border:2px solid #000;
-  border-radius: 5px;
-  height:100%;
-  overflow:hidden;
-  background:#eee;
-}
-
 .country {
   stroke: #888;
   stroke-width: 0.5px;
+}
+
+.gpoint {
+  fill: #f2f200;
+  stroke: #111;
 }

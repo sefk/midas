@@ -8,13 +8,13 @@ var topojson = require('topojson');
 
 var MapView = Backbone.View.extend({
 
-  el: "#container",
-
   events: {},
 
   initialize: function (options) {
     var that = this;
-    this.options = options;
+    this.el = options.el;
+    this.people = options.people;
+
     $(window).resize(_.debounce(function () {
       that.render();
     }, 200));
@@ -50,15 +50,14 @@ var MapView = Backbone.View.extend({
     that.width = parseInt(d3.select(that.el).style('width'), 10);
     that.height = Math.round(that.width / 2);
 
-    this.$el.addClass("mapborder");
-
     that.$el.find('svg').remove();
-    var svg = d3.select(that.el).append('svg')
+    that.svg = d3.select(that.el).append('svg')
       .attr("preserveAspectRatio", "xMaxYMid")
       .attr("meetOrSlice", "slice")
       .attr("viewBox", "0 0 " + that.width + " " + that.height)
       .attr("width", that.width)
-      .attr("height", that.height);
+      .attr("height", that.height)
+      .attr("style", "border:solid 2px #222; border-radius: 5px");
 
     that.projection = d3.geo.mercator()
       .scale(that.width / 2 / Math.PI)
@@ -67,16 +66,7 @@ var MapView = Backbone.View.extend({
     var path = d3.geo.path()
       .projection(that.projection);
 
-    svg.append("defs").append("path")
-      .datum({type: "Sphere"})
-      .attr("id", "sphere")
-      .attr("d", path);
-
-    svg.selectAll(".country")
-      .each(function (n) {
-        delete that.countries[n].color;
-      });
-    svg.selectAll(".country")
+    that.svg.selectAll(".country")
       .data(that.countries)
       .enter().insert("path", ".boundary")
       .attr("class", "country")
@@ -85,23 +75,33 @@ var MapView = Backbone.View.extend({
         return that.color(d.color);
       });
 
-    d3.select(self.frameElement).style("height", that.height + "px");
+    that.cities = that.svg.append("g");
+    this.people.on("sync", this.points, this);
+    this.people.fetch();
   },
 
-  addpoint: function (lat, lon) {
+  points: function (people) {
+    var that = this;
+    var locationTags = people
+      .pluck('location')
+      .filter(function (p) {return !_.isUndefined(p)});
 
-    var gpoint = g.append("g").attr("class", "gpoint");
-    var x = this.projection([lat, lon])[0];
-    var y = this.projection([lat, lon])[1];
+    locationTags.forEach(function (locationTag) {
+      var loc = locationTag.tag.data;
+      var gpoint = that.cities.append("g").attr("class", "gpoint");
+      var x = that.projection([loc.lon, loc.lat])[0];
+      var y = that.projection([loc.lon, loc.lat])[1];
 
-    gpoint.append("svg:circle")
-      .attr("cx", x)
-      .attr("cy", y)
-      .attr("class", "point")
-      .attr("r", 1.5);
+      gpoint.append("svg:circle")
+        .attr("cx", x)
+        .attr("cy", y)
+        .attr("class", "point")
+        .attr("r", 6)
+    });
   },
 
   cleanup: function () {
+    delete this.$el.find('svg');
     removeView(this);
   }
 
