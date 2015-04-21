@@ -22,7 +22,7 @@ var MapView = Backbone.View.extend({
     // shades of green, from http://colorbrewer2.org/
     // TODO: make map colors configurable
     this.color = d3.scale.ordinal()
-      .domain(d3.range(0, 7))
+      .domain(d3.range(0, 6))
       .range([
         'rgb(204,236,230)',
         'rgb(153,216,201)',
@@ -30,6 +30,12 @@ var MapView = Backbone.View.extend({
         'rgb(65,174,118)',
         'rgb(35,139,69)',
         'rgb(0,88,36)'
+      ]);
+
+    // single light blue background
+    this.color = d3.scale.ordinal()
+      .range([
+        'rgb(166,189,219)'
       ]);
 
     d3.json("data/world-50m.json", function (error, world) {
