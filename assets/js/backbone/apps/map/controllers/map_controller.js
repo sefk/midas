@@ -1,32 +1,57 @@
 var _ = require('underscore');
 var Backbone = require('backbone');
 var BaseController = require('../../../base/base_controller');
+var async = require('async');
 var MapView = require('../views/map_view');
 var ProfilesCollection = require('../../../entities/profiles/profiles_collection');
+var d3 = require('d3');
+var topojson = require('topojson');
 
 
 Map = {};
 
 Map.Controller = BaseController.extend({
 
-  events: {},
-
   initialize: function () {
-    this.profiles = new ProfilesCollection();
+    var that = this;
+    var gatherData = [];
+    var profiles;
+    var countries;
 
-    // the View renders itself so it can handle the callback correctly
-    // from reading and parsing all that map data
-    this.mapView = new MapView({
-      el: this.el,
-      people: this.profiles
+    gatherData.push(function (cb) {
+      profiles = new ProfilesCollection();
+      profiles.fetch({
+        success: function () {
+          cb(null);
+        },
+        error: function (jqXHR) {
+          cb(jqXHR);
+        }
+      })
+    });
+    gatherData.push(function (cb) {
+      d3.json("data/world-50m.json", function (err, world) {
+        if (err) {
+          cb(err);
+        } else {
+          countries = topojson.feature(world, world.objects.countries).features;
+          cb(null);
+        }
+      });
+    });
+    async.parallel(gatherData, function (err) {
+      if (err) return err;
+      that.mapView = new MapView({
+        el: that.el,
+        people: profiles,
+        countries: countries
+      }).render();
     });
   },
 
-  cleanup: function() {
-    if (this.mapView) {
-      this.mapView.cleanup();
-    }
-    removeView(this);
+  cleanup: function () {
+    if (!this.mapView) return;
+    this.mapView.cleanup();
   }
 
 });
