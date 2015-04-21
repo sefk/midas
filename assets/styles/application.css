@@ -1691,12 +1691,21 @@ ul.task-tags > li {
   line-height: 42px;
 }
 
-.country {
-  stroke: #888;
-  stroke-width: 0.5px;
+/* Map */
+
+.userMap {
+  background: #fff;
+  border: solid 2px #222;
+  border-radius: 5px;
 }
 
-.gpoint {
+.country {
+  stroke: #888;
+  stroke-width: 1px;
+  fill: #a6bddb;
+}
+
+.userDot {
   fill: #f2f200;
   stroke: #111;
 }
