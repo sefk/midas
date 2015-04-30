@@ -1693,12 +1693,6 @@ ul.task-tags > li {
 
 /* Map */
 
-.userMap {
-  background: #fff;
-  border: solid 2px #222;
-  border-radius: 5px;
-}
-
 .country {
   stroke: #888;
   stroke-width: 1px;

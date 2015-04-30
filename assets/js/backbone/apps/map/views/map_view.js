@@ -28,7 +28,7 @@ var MapView = Backbone.View.extend({
 
     // Plot map
     this.svg = d3.select(this.el).append('svg')
-      .attr("class", "userMap")
+      .attr("class", "box")
       .attr("preserveAspectRatio", "xMaxYMid")
       .attr("meetOrSlice", "slice")
       .attr("viewBox", "0 0 " + this.width + " " + this.height);
