@@ -76,7 +76,7 @@ module.exports.routes = {
     controller: 'main',
     action: 'index'
   },
-  '/map': {
+  '/people': {
     controller: 'main',
     action: 'index'
   },

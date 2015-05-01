@@ -13,7 +13,7 @@ var TaskShowController = require('../tasks/show/controllers/task_show_controller
 var TaskEditFormView = require('../tasks/edit/views/task_edit_form_view');
 var AdminMainController = require('../admin/controllers/admin_main_controller');
 var HomeController = require('../home/controllers/home_controller');
-var MapController = require('../map/controllers/map_controller');
+var PeopleController = require('../people/controllers/map_controller');
 
 
 var BrowseRouter = Backbone.Router.extend({
@@ -31,7 +31,7 @@ var BrowseRouter = Backbone.Router.extend({
     'profile/:id(/)/:action'    : 'showProfile',
     'admin(/)'                  : 'showAdmin',
     'admin(/):action(/)'        : 'showAdmin',
-    'map(/)'                    : 'showMap'
+    'people(/)'                 : 'showPeople'
   },
 
   data: { saved: false },
@@ -126,9 +126,9 @@ var BrowseRouter = Backbone.Router.extend({
     this.profileShowController = new ProfileShowController({ id: id, action: action, data: this.data });
   },
 
-  showMap: function () {
+  showPeople: function () {
     this.cleanupChildren();
-    this.mapController = new MapController({target: 'map', el: '#container', router: this, data: this.data });
+    this.peopleController = new PeopleController({target: 'people', el: '#container', router: this, data: this.data });
   },
 
   showAdmin: function (action) {
