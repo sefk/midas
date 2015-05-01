@@ -26,6 +26,9 @@ var ProfileShowView = Backbone.View.extend({
     "click #profile-cancel"      : "profileCancel",
     "click #like-button"         : "like",
     "keyup #name, #title, #bio"  : "fieldModified",
+    "keyup"                      : "checkName",
+    "change"                     : "checkName",
+    "blur"                       : "checkName",
     "click .removeAuth"          : "removeAuth"
   },
 
@@ -52,7 +55,7 @@ var ProfileShowView = Backbone.View.extend({
       edit: this.edit,
       saved: this.saved,
       ui: UIConfig
-    }
+    };
 
     data.email = (data.data.emails && data.data.emails.length) ? data.data.emails[0] : '';
 
@@ -96,13 +99,14 @@ var ProfileShowView = Backbone.View.extend({
           );
         },
         done: function (e, data) {
+          var result;
           // for IE8/9 that use iframe
           if (data.dataType == 'iframe text') {
-            var result = JSON.parse(data.result);
+            result = JSON.parse(data.result);
           }
           // for modern XHR browsers
           else {
-            var result = JSON.parse($(data.result).text());
+            result = JSON.parse($(data.result).text());
           }
           self.model.trigger("profile:updateWithPhotoId", result[0]);
         },
@@ -113,7 +117,7 @@ var ProfileShowView = Backbone.View.extend({
           if (data.jqXHR.status == 413) {
             message = "The uploaded file exceeds the maximum file size.";
           }
-          self.$("#file-upload-alert").html(message)
+          self.$("#file-upload-alert").html(message);
           self.$("#file-upload-alert").show();
         }
     });
@@ -127,7 +131,7 @@ var ProfileShowView = Backbone.View.extend({
       '&profileTitle=' + (self.model.attributes.title || '') +
       '&profileLink=' + window.location.protocol + "//" + window.location.host + "" + window.location.pathname +
       '&profileName=' + (self.model.attributes.name || '') +
-      '&profileLocation=' + (self.model.attributes.location ? self.model.attributes.location.tag.name : '') +
+      '&profileLocation=' + (self.model.attributes.location ? self.model.attributes.location.name : '') +
       '&profileAgency=' + (self.model.agency ? self.model.agency.name : '')),
       type: 'GET'
     }).done( function (data) {
@@ -142,8 +146,7 @@ var ProfileShowView = Backbone.View.extend({
       el: '.tag-wrapper',
       target: 'profile',
       targetId: 'userId',
-      edit: this.edit,
-      url: '/api/tag/findAllByUserId/'
+      edit: this.edit
     });
     this.tagView.render();
   },
@@ -218,128 +221,12 @@ var ProfileShowView = Backbone.View.extend({
         window.cache.userEvents.trigger("user:profile:save", data.toJSON());
       }
 
-      var tags = [
-        $("#company").select2('data'),
-        $("#location").select2('data')
-      ];
-      self.model.trigger("profile:tags:save", tags);
-    });
-
-    self.on('newTagSaveDone',function (){
-
-      tags         = [];
-      var tempTags = [];
-
-      //get newly created tags from big three types
-      _.each(self.data.newItemTags, function(newItemTag){
-        tags.push(newItemTag);
-      });
-
-      tempTags.push.apply(tempTags,self.$("#tag_topic").select2('data'));
-      tempTags.push.apply(tempTags,self.$("#tag_skill").select2('data'));
-      tempTags.push.apply(tempTags,self.$("#tag_location").select2('data'));
-      tempTags.push.apply(tempTags,self.$("#tag_agency").select2('data'));
-
-      //see if there are any previously created big three tags and add them to the tag array
-      _.each(tempTags,function(tempTag){
-          if ( tempTag.id !== tempTag.name ){
-          tags.push(tempTag);
-        }
-      });
-
-      var tagMap = {};
-
-        // if a different profile is being edited, add its userId
-        if (self.model.toJSON().id !== window.cache.currentUser.id) {
-          tagMap.userId = self.model.toJSON().id;
-        }
-
-      async.forEach(tags, function(tag, callback){
-        //diffAdd,self.model.attributes.id,"taskId",callback
-        return self.tagFactory.addTag(tag,tagMap.userId,"userId",callback);
-      }, function(err) {
-        self.model.trigger("profile:tags:save:success", err);
-      });
-    });
-
-    this.listenTo(self.model, "profile:tags:save", function (tags) {
-
-      var newTags = [];
-
-      newTags = newTags.concat(
-        self.$("#tag_topic").select2('data'),
-        self.$("#tag_skill").select2('data'),
-        self.$("#tag_location").select2('data'),
-        self.$("#location").select2('data'),
-        self.$("#tag_agency").select2('data')
-      );
-
-      var removeTag = function(type, done) {
-        if (self.model[type]) {
-          // delete the existing tag
-          $.ajax({
-            url: '/api/tag/' + self.model[type].tagId,
-            type: 'DELETE',
-          }).done(function (data) {
-            return done();
-          });
-          return;
-        }
-        return done();
-      }
-
-      var addTag = function (tag, done) {
-        // the tag is invalid or hasn't been selected
-        if (!tag || !tag.id) {
-          return done();
-        }
-        // the tag already is stored in the db
-        if (tag.tagId) {
-          return done();
-        }
-        var tagMap = {
-          tagId: tag.id
-        };
-        // if a different profile is being edited, add its userId
-        if (self.model.toJSON().id !== window.cache.currentUser.id) {
-          tagMap.userId = self.model.toJSON().id;
-        }
-        $.ajax({
-          url: '/api/tag',
-          type: 'POST',
-          data: tagMap
-        }).done(function (data) {
-          done();
-        });
-      }
-
-      async.forEach(
-        newTags,
-        function(newTag, callback) {
-          return self.tagFactory.addTagEntities(newTag,self,callback);
-        },
-        function(err) {
-          if (err) return next(err);
-
-          tags = _.filter(tags, function(tag) {
-            return (tag && tag.id !== tag.name);
-          });
-          async.each(['agency','location'], removeTag, function (err) {
-            async.each(tags, addTag, function (err) {
-              self.trigger("newTagSaveDone");
-            });
-          });
-        }
-      );
-
-    });
-
-    this.listenTo(self.model, "profile:tags:save:success", function (err) {
-      setTimeout(function() { $("#profile-save, #submit").attr("disabled", "disabled") },0);
+      setTimeout(function() { $("#profile-save, #submit").attr("disabled", "disabled"); },0);
       $("#profile-save, #submit").removeClass("btn-primary");
       $("#profile-save, #submit").addClass("btn-success");
       self.data.saved = true;
       Backbone.history.navigate('profile/' + self.model.toJSON().id, { trigger: true });
+
     });
 
     this.listenTo(self.model, "profile:save:fail", function (data) {
@@ -433,7 +320,7 @@ var ProfileShowView = Backbone.View.extend({
       }
     });
     if (modelJson.agency) {
-      $("#company").select2('data', modelJson.agency.tag);
+      $("#company").select2('data', modelJson.agency);
     }
 
     $("#topics").on('change', function (e) {
@@ -466,7 +353,24 @@ var ProfileShowView = Backbone.View.extend({
           });
           el.reload = true;
           el.open = true;
-          $('#location').select2({ data: d }).select2('open');
+          $('#location').select2({
+            data: d,
+            formatResult: function (obj) { return obj.name; },
+            formatSelection: function (obj) { return obj.name; },
+            createSearchChoice: function (term, values) {
+              if (!values.some(function (v) {
+                  return (v.name.toLowerCase().indexOf(term.toLowerCase()) >= 0);
+                })) {
+                return {
+                  tagType: 'location',
+                  id: term,
+                  value: term,
+                  temp: true,
+                  name: "<b>" + term + "</b> <i>search for this location</i>"
+                };
+              }
+            }
+          }).select2('open');
         });
       } else {
         delete this.temp;
@@ -486,7 +390,7 @@ var ProfileShowView = Backbone.View.extend({
       }
     });
     if (modelJson.location) {
-      $("#location").select2('data', modelJson.location.tag);
+      $("#location").select2('data', modelJson.location);
     }
     $("#location").on('change', function (e) {
       self.model.trigger("profile:input:changed", e);
@@ -509,6 +413,15 @@ var ProfileShowView = Backbone.View.extend({
     this.model.trigger("profile:input:changed", e);
   },
 
+  checkName: function (e) {
+    var name = this.$("#name").val();
+    if (name && name !== '') {
+      $("#name").closest(".form-group").find(".help-block").hide();
+    } else {
+      $("#name").closest(".form-group").find(".help-block").show();
+    }
+  },
+
   profileCancel: function (e) {
     e.preventDefault();
     Backbone.history.navigate('profile/' + this.model.toJSON().id, { trigger: true });
@@ -521,15 +434,45 @@ var ProfileShowView = Backbone.View.extend({
 
   profileSubmit: function (e) {
     e.preventDefault();
+
+    // If the name isn't valid, don't put the save through
+    if (validate({ currentTarget: '#name' })) {
+      return;
+    }
+
     $("#profile-save, #submit").button('loading');
-    setTimeout(function() { $("#profile-save, #submit").attr("disabled", "disabled") }, 0);
-    var data = {
+    setTimeout(function() { $("#profile-save, #submit").attr("disabled", "disabled"); }, 0);
+
+    var newTags = [].concat(
+          $("#company").select2('data'),
+          $("#tag_topic").select2('data'),
+          $("#tag_skill").select2('data'),
+          $("#tag_location").select2('data'),
+          $("#location").select2('data'),
+          $("#tag_agency").select2('data')
+        ),
+        modelTags = _(this.model.get('tags')).filter(function(tag) {
+          return (tag.type !== 'agency' && tag.type !== 'location');
+        }),
+        data = {
           name: $("#name").val(),
           title: $("#title").val(),
-          bio: $("#bio").val()
+          bio: $("#bio").val(),
         },
         email = this.model.get('emails')[0],
-        self = this;
+        self = this,
+        tags = _(modelTags.concat(newTags)).chain()
+          .filter(function(tag) {
+            return _(tag).isObject() && !tag.context;
+          })
+          .map(function(tag) {
+            return (tag.id && tag.id !== tag.name) ? +tag.id : {
+              name: tag.name,
+              type: tag.tagType
+            };
+          }).unique().value();
+
+    data.tags = tags;
 
     if ($("#profile-email").val() !== email.email) {
       $.ajax({
@@ -539,8 +482,8 @@ var ProfileShowView = Backbone.View.extend({
         data: { email: $("#profile-email").val() },
         success: function() { self.model.trigger("profile:save", data); },
         error: function() {
-          var msg = 'Failed to update your email address. Please verify it \
-                     is a valid email address and try again.';
+          var msg = 'Failed to update your email address. Please verify it ' +
+                    'is a valid email address and try again.';
           $("#email-update-alert").html(msg);
           $("#email-update-alert").show();
         }
@@ -552,12 +495,8 @@ var ProfileShowView = Backbone.View.extend({
 
   removeAuth: function (e) {
     if (e.preventDefault) e.preventDefault();
-    var node = $(e.target);
-    // walk up the tree until we get to the marked node
-    while (!(node.hasClass("removeAuth"))) {
-      node = node.parent();
-    }
-    this.model.trigger("profile:removeAuth", node.attr("id"));
+    var node = $(e.currentTarget);
+    this.model.trigger("profile:removeAuth", node.data("id"));
   },
 
   like: function (e) {
@@ -608,7 +547,7 @@ var ProfileShowView = Backbone.View.extend({
     if (this.taskView) { this.taskView.cleanup(); }
     if (this.volView) { this.volView.cleanup(); }
     removeView(this);
-  },
+  }
 
 });
 

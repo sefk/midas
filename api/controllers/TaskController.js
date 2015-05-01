@@ -5,7 +5,6 @@
  * @description :: Interaction with tasks
  */
 var taskUtil = require('../services/utils/task');
-var tagUtil = require('../services/utils/tag');
 var userUtil = require('../services/utils/user');
 var exportUtil = require('../services/utils/export');
 var i18n = require('i18next');
@@ -51,6 +50,7 @@ module.exports = {
 
   findAllByProjectId: function (req, res) {
     Task.findByProjectId(req.params.id)
+    .populate('tags')
     .sort({'updatedAt': -1})
     .exec(function(err, tasks) {
       if (err) return res.send(err, 500);

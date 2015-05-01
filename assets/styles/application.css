@@ -251,6 +251,11 @@ input[type="submit"] {
   margin: -1px 0;
 }
 
+.container > .server-alert {
+  margin-left: -20px;
+  margin-top: 20px;
+}
+
 /*****************
 =  HEADERS
 ******************/
@@ -733,7 +738,7 @@ a.search-tag-remove:hover {
 }
 
 /* project owner styles */
-a.delete-projectowner, a.delete-volunteer, .delete-project-event{
+a.delete-projectowner, a.delete-volunteer {
   position: absolute;
   right: -2px;
   top: -2px;
@@ -746,11 +751,25 @@ a.delete-projectowner, a.delete-volunteer, .delete-project-event{
   font-size: 7px;
 }
 
-.delete-project-event {
-  position: relative;
+.projectowner-add {
   float: right;
-  right: -12px;
-  top: -4px;
+  margin-left: 5px;
+  margin-top: -3px;
+  text-transform: none;
+}
+
+a.delete-project-event {
+  float:right;
+  top: -2px;
+  background-color: rgb(255,255,255);
+  background-color: rgba(255,255,255,0.8);
+  border-radius: 10px;
+  border: 1px solid #c0c0c0;
+  color: #666;
+  font-size: 7px;
+  width: 12px;
+  height: 12px;
+  padding: 0px 3px;
 }
 
 .project-people {
@@ -1157,6 +1176,21 @@ form.comment-submit .input-group-btn {
 #comment-empty {
   padding-top: 10px;
   padding-bottom: 10px;
+}
+
+a.delete-comment {
+  float:right;
+  right: -2px;
+  top: -2px;
+  background-color: rgb(255,255,255);
+  background-color: rgba(255,255,255,0.8);
+  border-radius: 10px;
+  border: 1px solid #c0c0c0;
+  color: #666;
+  font-size: 7px;
+  width: 12px;
+  height: 12px;
+  padding: 0px 3px;
 }
 
 /*****************

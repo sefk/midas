@@ -34,6 +34,10 @@ module.exports.policies = {
     '*': true
   },
 
+  UserAuthController: {
+    '*': ['authenticated', 'requireUserId', 'requireId', 'userAuthIdMatch']
+  },
+
   // Limit user controller view to just the /user endpoint
   UserController : {
     '*': false,
@@ -131,25 +135,12 @@ module.exports.policies = {
     'destroy': ['authenticated', 'requireId', 'admin']
   },
 
-  TagController : {
-    '*': ['authenticated'],
-    'find': false,
-    'findOne': false,
-    'create': ['authenticated', 'requireUserId', 'projectId', 'taskId', 'ownerOrAdmin'],
-    'update': false,
-    'destroy': ['authenticated', 'requireUserId', 'requireId'],
-    'add': ['authenticated', 'requireUserId'],
-    'findAllByProjectId': ['authenticated', 'requireId', 'project'],
-    'findAllByTaskId': ['authenticated', 'requireId', 'task']
-    //'findAllByUserId': not needed because authenticated is default
-  },
-
   CommentController : {
     'find': false,
     'findOne': false,
     'create': ['authenticated', 'requireUserId', 'addUserId', 'projectId', 'taskId'],
     'update': ['authenticated', 'requireUserId', 'projectId', 'taskId'],
-    'destroy': ['authenticated', 'requireUserId', 'requireId'],
+    'destroy': ['authenticated', 'requireUserId', 'requireId', 'admin'],
     'findAllByProjectId': ['authenticated', 'requireId', 'project'],
     'findAllByTaskId': ['authenticated', 'requireId', 'task']
   },

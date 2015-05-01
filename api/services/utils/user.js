@@ -25,7 +25,7 @@ var sendWelcomeEmail = function(done, user) {
   noteUtils.notifier.notify(params, function (err) {
     done(err, user);
   });
-}
+};
 
 module.exports = {
 
@@ -176,7 +176,7 @@ module.exports = {
           result.agency = [ userObj.company ];
         }
         return result;
-      };
+      }
 
       // no user, create one
       if (!user) {
@@ -221,7 +221,7 @@ module.exports = {
                 return done(null, user);
               }
               var email = {
-                userId: user['id'],
+                userId: user.id,
                 email: userData.username,
               };
               // Store the email address
@@ -281,11 +281,7 @@ module.exports = {
             for (var i in newTags) {
               newTagIds.push(newTags[i].id);
             }
-            // Prune old tags
-            tagUtils.pruneTags(user.id, newTagIds, function (err, removedTags) {
-              sails.log.debug('Prune Tags:', removedTags);
-              cbTagUpdate(err);
-            });
+            cbTagUpdate();
           });
         };
 
@@ -364,7 +360,7 @@ module.exports = {
         .limit(1)
         .exec(function (err, pwObj) {
           // If no password is set or there is an error, abort
-          if (err || !pwObj || pwObj.length == 0) { return done(null, false, { message: 'Invalid email address or password.'}); }
+          if (err || !pwObj || pwObj.length === 0) { return done(null, false, { message: 'Invalid email address or password.'}); }
           // Compare the passwords to check if it is correct
           bcrypt.compare(userData.password, pwObj[0].password, function (err, res) {
             // Valid password
@@ -548,10 +544,7 @@ module.exports = {
         for (var i in newTags) {
           newTagIds.push(newTags[i].id);
         }
-        // Prune old tags
-        tagUtils.pruneTags(userId, newTagIds, function (err, removedTags) {
-          cbTagUpdate(err);
-        });
+        cbTagUpdate();
       });
     };
 
@@ -576,7 +569,7 @@ module.exports = {
         // Stores the credentials and the user's other profile data
         var user_cb = function(err, user) {
           var creds = {
-            userId: user['id'],
+            userId: user.id,
             provider: provider,
             providerId: providerUser.id,
             accessToken: tokens.accessToken,
@@ -589,7 +582,7 @@ module.exports = {
             // Store emails if they're available
             if (providerUser.emails && (providerUser.emails.length > 0)) {
               var email = {
-                userId: user['id'],
+                userId: user.id,
                 email: providerUser.emails[0].value.toLowerCase(),
               };
               UserEmail.findOne(email, function (err, storedEmail) {
@@ -676,9 +669,16 @@ module.exports = {
         userAuth.save(function (err) {
           if (err) { return done(null, false, { message: 'Unable to update user credentials.' }); }
           // acquire user model and authenticate
-          User.findOneById(userAuth['userId'], function (err, user) {
+          User.findOneById(userAuth.userId, function (err, user) {
             if (!user || err) { return done(null, false, { message: 'Error looking up user.' }); }
             sails.log.debug('User Found:', user);
+            if (providerUser.id !== user.id) {
+              return done(null, false, {
+                message: 'We\'re sorry, you can\'t connect that ' +
+                  sails.config.auth.config.config[userAuth.provider].name +
+                  ' account since it is already connected to a different profile.'
+              });
+            }
 
             var update = false;
             if (providerUser.overwrite || (user.photoId && !user.photoUrl && providerUser.photoUrl)) {
@@ -728,12 +728,13 @@ module.exports = {
       name: user.name,
       title: user.title,
       bio: user.bio,
+      tags: user.tags,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
     // if the requestor is the same as the user, show admin status
     if (user.id === reqId) {
-      u.isAdmin = user.isAdmin
+      u.isAdmin = user.isAdmin;
     }
     return u;
   },
@@ -754,79 +755,49 @@ module.exports = {
       cb = reqUser;
       reqUser = undefined;
     }
-    User.findOneById(userId, function (err, user) {
+    User.findOne({ id: userId }).populate('tags').exec(function (err, user) {
       if (err) { return cb(err, null); }
       delete user.deletedAt;
       if (userId != reqId) {
         user = self.cleanUser(user, reqId);
       }
-      tagUtils.assemble({ userId: userId }, function (err, tags) {
+      user.location = _.findWhere(user.tags, { type: 'location' });
+      user.agency = _.findWhere(user.tags, { type: 'agency' });
+      Like.countByTargetId(userId, function (err, likes) {
         if (err) { return cb(err, null); }
-        for (i in tags) {
-          delete tags[i].projectId;
-          delete tags[i].taskId;
-          delete tags[i].updatedAt;
-          delete tags[i].deletedAt;
-          delete tags[i].userId;
-
-          if ( typeof tags[i].tag != 'undefined' ){
-            delete tags[i].tag.createdAt;
-            delete tags[i].tag.updatedAt;
-            delete tags[i].tag.deletedAt;
-            if (tags[i].tag.type == 'agency') {
-              if (!user.agency) {
-                user.agency = tags[i];
-              } else {
-                // always use the latest tag stored, in case multiple are stored
-                if (user.agency.createdAt < tags[i].createdAt) {
-                  user.agency = tags[i];
-                }
-              }
-            }
-            if (tags[i].tag.type == 'location') {
-              if (!user.location) {
-                user.location = tags[i];
-              } else {
-                // always use the latest tag stored, in case multiple are stored
-                if (user.location.createdAt < tags[i].createdAt) {
-                  user.location = tags[i];
-                }
-              }
-            }
-         }
-         }
-        user.tags = tags;
-        Like.countByTargetId(userId, function (err, likes) {
+        user.likeCount = likes;
+        user.like = false;
+        user.isOwner = false;
+        Like.findOne({ where: { userId: reqId, targetId: userId }}, function (err, like) {
           if (err) { return cb(err, null); }
-          user.likeCount = likes;
-          user.like = false;
-          user.isOwner = false;
-          Like.findOne({ where: { userId: reqId, targetId: userId }}, function (err, like) {
+          if (like) { user.like = true; }
+          // stop here if the requester id is not the same as the user id
+          if (userId != reqId && !admin) {
+            return cb(null, user);
+          }
+          // Look up which providers the user has authorized
+          UserAuth.findByUserId(userId, function (err, auths) {
             if (err) { return cb(err, null); }
-            if (like) { user.like = true; }
-            // stop here if the requester id is not the same as the user id
-            if (userId != reqId && !admin) {
-              return cb(null, user);
-            }
-            // Look up which providers the user has authorized
-            UserAuth.findByUserId(userId, function (err, auths) {
-              if (err) { return cb(err, null); }
-              user.auths = [];
-              for (var i = 0; i < auths.length; i++) {
-                user.auths.push(auths[i].provider);
-              }
-              // Look up the user's email addresses
-              UserEmail.findByUserId(userId, function (err, emails) {
-                if (err) { return cb(err, null); }
-                user.isOwner = true;
-                user.emails = [];
-                if (emails) { user.emails = emails; }
-                return cb(null, user);
+            user.auths = [];
+            for (var i = 0; i < auths.length; i++) {
+              user.auths.push({
+                provider: auths[i].provider,
+                id: auths[i].id,
+                token: auths[i].accessToken
               });
+            }
+            // Look up the user's email addresses
+            UserEmail.findByUserId(userId, function (err, emails) {
+              if (err) { return cb(err, null); }
+              user.isOwner = true;
+              user.emails = [];
+              if (emails) { user.emails = emails; }
+              return cb(null, user);
             });
           });
         });
       });
+
     });
   },
 
@@ -839,6 +810,7 @@ module.exports = {
   addUserName: function (ownerObj, done) {
     User.findOneById(ownerObj.userId, function (err, owner) {
       if (err) { return done(err); }
+      if (!owner) { return done(); }
       ownerObj.name = owner.name;
       return done();
     });
@@ -864,11 +836,11 @@ module.exports = {
     var _password = password.toLowerCase().trim();
     // check username is not the same as the password, in any case
     if (_username != _password && _username.split('@',1)[0] != _password) {
-      rules['username'] = true;
+      rules.username = true;
     }
     // length > 8 characters
     if (password && password.length >= 8) {
-      rules['length'] = true;
+      rules.length = true;
     }
     // Uppercase, Lowercase, and Numbers
     for (var i = 0; i < password.length; i++) {
@@ -876,19 +848,19 @@ module.exports = {
       // from http://stackoverflow.com/questions/3816905/checking-if-a-string-starts-with-a-lowercase-letter
       if (test === test.toLowerCase() && test !== test.toUpperCase()) {
         // lowercase found
-        rules['lower'] = true;
+        rules.lower = true;
       }
       else if (test === test.toUpperCase() && test !== test.toLowerCase()) {
-        rules['upper'] = true;
+        rules.upper = true;
       }
       // from http://stackoverflow.com/questions/18082/validate-numbers-in-javascript-isnumeric
       else if (!isNaN(parseFloat(test)) && isFinite(test)) {
-        rules['number'] = true;
+        rules.number = true;
       }
     }
     // check for symbols
     if (/.*[^\w\s].*/.test(password)) {
-      rules['symbol'] = true;
+      rules.symbol = true;
     }
     return rules;
   }
