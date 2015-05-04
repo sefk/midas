@@ -58,7 +58,7 @@ var MapView = Backbone.View.extend({
       });
 
     _.each(locationTags, function (locationTag) {
-      var loc = locationTag.tag.data;
+      var loc = locationTag.data;
       var userDot = users.append("g").attr("class", "userDot");
       var projectedPoint = this.projection([loc.lon, loc.lat]);
       userDot.append("svg:circle")
