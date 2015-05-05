@@ -1725,15 +1725,28 @@ ul.task-tags > li {
   line-height: 42px;
 }
 
-/* Map */
+/* PeopleMap */
 
 .country {
-  stroke: #888;
+  fill: #ccc;
+  stroke: #fff;
   stroke-width: 1px;
-  fill: #a6bddb;
 }
 
 .userDot {
-  fill: #f2f200;
-  stroke: #111;
+  fill: steelblue;
+  stroke: #fff;
+  fill-opacity: .8;
+}
+
+.d3_tooltip {
+  background-color: rgba(68, 136, 187, 0.5);
+  margin: 10px;
+  height: 50px;
+  width: 150px;
+  padding-left: 10px;
+  padding-top: 10px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
 }

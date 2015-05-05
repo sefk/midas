@@ -2,15 +2,15 @@ var _ = require('underscore');
 var Backbone = require('backbone');
 var BaseController = require('../../../base/base_controller');
 var async = require('async');
-var MapView = require('../views/map_view');
+var PeopleMapView = require('../views/people_map_view');
 var ProfilesCollection = require('../../../entities/profiles/profiles_collection');
 var d3 = require('d3');
 var topojson = require('topojson');
 
 
-Map = {};
+PeopleMap = {};
 
-Map.Controller = BaseController.extend({
+PeopleMap.Controller = BaseController.extend({
 
   initialize: function () {
     var that = this;
@@ -41,7 +41,7 @@ Map.Controller = BaseController.extend({
     });
     async.parallel(gatherData, function (err) {
       if (err) return err;
-      that.mapView = new MapView({
+      that.peopleMapView = new PeopleMapView({
         el: that.el,
         people: profiles,
         countries: countries
@@ -50,10 +50,10 @@ Map.Controller = BaseController.extend({
   },
 
   cleanup: function () {
-    if (!this.mapView) return;
-    this.mapView.cleanup();
+    if (!this.peopleMapView) return;
+    this.peopleMapView.cleanup();
   }
 
 });
 
-module.exports = Map.Controller;
+module.exports = PeopleMap.Controller;
