@@ -1,8 +1,9 @@
 // Use D3 to generate a nice looking world map with dots for our users.
 //
-// Note on picking the width and height in render(). This sets the
-// height and width based on how the view is originally scaled.
-// SVG scaling will take care of the rest to make it responsive.
+// Scaling: pick height and width based on how the view is originally
+// scaled. SVG scaling will take care of the rest to make it responsive.
+// staticScale stores what that was when map was first drawn, and
+// dynamicScale changes as the SVG is resized.
 //
 // code for world map adapted from https://gist.github.com/mbostock/4180634
 // and http://techslides.com/demos/d3/worldmap-template.html
@@ -24,14 +25,14 @@ var PeopleMapView = Backbone.View.extend({
     this.center = [0, 15];          // favor the northern hemisphere
     this.rotate = [-10, 0];         // break map cleanly in pacific
     this.tipDescTemplate = _.template(tooltipTemplate);
-    this.tipXOffset = this.smallestDotPx * this.dotSizeFactor;
+    this.tipXOffset = this.smallestDotPx;
   },
 
   render: function () {
     // mercator projection is 960 x 500 @ 150 points, scale relative to that
     this.width = this.$el.width();
     this.height = Math.round(this.width / 2);
-    this.scaleFactor = this.width / 960;
+    this.staticScale = this.width / 960;
 
     this.svg = d3.select(this.el).append('svg')
       .attr("class", "box")
@@ -45,7 +46,7 @@ var PeopleMapView = Backbone.View.extend({
 
   renderCountries: function () {
     this.projection = d3.geo.mercator()
-      .scale(150 * this.scaleFactor)
+      .scale(150 * this.staticScale)
       .translate([Math.round(this.width / 2), Math.round(this.height / 2)])
       .center(this.center)
       .rotate(this.rotate);
@@ -75,8 +76,8 @@ var PeopleMapView = Backbone.View.extend({
     var dotScale = d3.scale.linear()
       .domain([1, _.max(citiesPeople, 'length').length])
       .range([
-        this.smallestDotPx * this.scaleFactor,
-        this.smallestDotPx * this.scaleFactor * this.dotSizeFactor
+        this.smallestDotPx * this.staticScale,
+        this.smallestDotPx * this.staticScale * this.dotSizeFactor
       ]);
 
     var tooltip = d3.select("body")
@@ -115,12 +116,14 @@ var PeopleMapView = Backbone.View.extend({
           window.cache.userEvents.trigger("people:list", {people: cityPeople})
         })
         .on("mouseover", function () {
-          var dotBBox = d3.select(this).node().getBBox();
-          var dotR = dotBBox.x + dotBBox.width + that.svg.node().offsetLeft;
-          var dotT = dotBBox.y + that.svg.node().offsetTop;
+          var dynamicScale = that.svg.node().width.animVal.value / 960;
+          var dotR = that.svg.node().offsetLeft
+            + ((this.cx.animVal.value + this.r.animVal.value) * dynamicScale);
+          var dotT = that.svg.node().offsetTop
+            + ((this.cy.animVal.value - this.r.animVal.value) * dynamicScale);
           tooltip.html(tipDesc)
             .style("visibility", "visible")
-            .style("left", String(dotR + that.tipXOffset) + "px")
+            .style("left", String(dotR + (that.tipXOffset * dynamicScale)) + "px")
             .style("top", String(dotT) + "px")
           return true;
         })
