@@ -51,7 +51,7 @@ module.exports = {
       username: 'cersei@gameofthrones.com',
       password: 'cerseicerseiL1!',
       title: 'Queen of the Seven Kingdoms',
-      agency: 'House of the King',
+      agency: 'Dept of Treasury',
       location: 'Washington, DC',
       photo: 'assets/users/cersei.jpg'
     },
