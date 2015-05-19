@@ -35,13 +35,25 @@ module.exports.connections = {
   // POSTGRES
   // Set your postgres database settings here, including the username, password
   // and database name
-  postgresql: {
-    adapter     : 'sails-postgresql',
-    host        : 'localhost',
-    user        : 'midas',
-    password    : 'midas',
-    database    : 'midas',
-    softDelete  : true
+  // postgresql: {
+    // adapter     : 'sails-postgresql',
+    // host        : 'localhost',
+    // user        : 'midas',
+    // password    : 'midas',
+    // database    : 'midas',
+    // softDelete  : true
+  // },
+
+  // MYSQL
+  mysql: {
+    module    : 'sails-mysql',
+    host      : 'localhost',
+    port      : 3306,
+    user      : 'midas',
+    password  : 'midas',
+    database  : 'midas',
+    charset   : 'utf8',
+    collation : 'utf8_swedish_ci'
   }
 
 };
