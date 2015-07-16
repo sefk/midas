@@ -303,6 +303,9 @@ var BrowseMainView = Backbone.View.extend({
     }).done(function (data) {
       // render the search results
       self.renderList(data);
+      if (self.options.target == 'profiles') {
+        self.renderMap(data);
+      }
     });
   },
 
